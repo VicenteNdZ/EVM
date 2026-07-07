@@ -36,10 +36,23 @@
     if (k.indexOf('sb-') === 0 || k.indexOf('sb_') === 0) return false; // sesión supabase
     if (k === 'evm_auth') return false;         // sesión del dispositivo, no se sincroniza
     if (k.indexOf('evm_cloud') === 0) return false;
+    if (k.indexOf('evm_ws') === 0) return false;         // workspace activo (por dispositivo)
+    if (k.indexOf('evm_orgs') === 0) return false;       // membresía: viene de la nube (org_members)
+    if (k.indexOf('evm_migrated') === 0) return false;   // banderas de migración local
+    if (k.indexOf('evm_builds_umig') === 0) return false;
     // imágenes pesadas: NO se sincronizan (etapa 2 = almacenamiento de archivos)
     if (k.indexOf('agd_obj_photos') >= 0) return false;   // fotos de objetos (data URLs)
     if (k.indexOf('agd_proj_covers') >= 0) return false;  // portadas de proyecto (data URLs)
     return true;
+  }
+
+  // extrae el id de organización de una clave "org::<id>::<clave>" (null si es personal/global)
+  function orgOf(k) {
+    if (k && k.indexOf('org::') === 0) {
+      var rest = k.slice(5), i = rest.indexOf('::');
+      if (i > 0) return rest.slice(0, i);
+    }
+    return null;
   }
 
   // --- cola de subida (con retraso para agrupar cambios) ---
@@ -112,11 +125,16 @@
     if (!keys.length || !client) { return; }
     var uid = await currentUserId();
     if (!uid) { keys.forEach(function (k) { dirty[k] = true; }); return; }
-    var upserts = [], deletes = [];
+    var upserts = [], deletes = [];          // personales -> user_data
+    var orgUp = [], orgDel = [];             // compartidos -> org_data
     keys.forEach(function (k) {
       var v = rawGet(k);
-      if (v == null) deletes.push(k);
-      else upserts.push({ user_id: uid, key: k, value: v, updated_at: new Date().toISOString() });
+      var oid = orgOf(k);
+      if (oid) {
+        if (v == null) orgDel.push({ org_id: oid, key: k });
+        else orgUp.push({ org_id: oid, key: k, value: v, updated_at: new Date().toISOString() });
+      } else if (v == null) { deletes.push(k); }
+      else { upserts.push({ user_id: uid, key: k, value: v, updated_at: new Date().toISOString() }); }
     });
     try {
       if (upserts.length) {
@@ -126,6 +144,14 @@
       if (deletes.length) {
         var r2 = await client.from('user_data').delete().eq('user_id', uid).in('key', deletes);
         if (r2.error) throw r2.error;
+      }
+      if (orgUp.length) {
+        var r3 = await client.from('org_data').upsert(orgUp, { onConflict: 'org_id,key' });
+        if (r3.error) throw r3.error;
+      }
+      for (var od = 0; od < orgDel.length; od++) {
+        var r4 = await client.from('org_data').delete().eq('org_id', orgDel[od].org_id).eq('key', orgDel[od].key);
+        if (r4.error) throw r4.error;
       }
     } catch (e) {
       // reintentar en el próximo ciclo
@@ -173,7 +199,33 @@
           if (row.value != null) rawSet(row.key, row.value);
         });
       } finally { suppress = false; }
+      try { await window.EVMCloud.pullOrgs(); } catch (e) {}
       return { ok: true, count: (r.data || []).length };
+    },
+
+    // baja mi membresía de organizaciones (org_members) y sus datos compartidos (org_data)
+    pullOrgs: async function () {
+      try { await ready; } catch (e) { return { ok: false }; }
+      var email = null;
+      try { email = (sessionUser && sessionUser.email) || (((await client.auth.getUser()).data.user) || {}).email; } catch (e) {}
+      if (!email) return { ok: false };
+      var m = await client.from('org_members').select('org_id,org_name');
+      if (m.error) return { ok: false, error: m.error.message };
+      var rows = m.data || [];
+      var uname = String(email).split('@')[0];
+      var orgs = rows.map(function (row) { return { id: row.org_id, name: row.org_name || row.org_id, members: [uname] }; });
+      suppress = true;
+      try { rawSet('evm_orgs', JSON.stringify(orgs)); } finally { suppress = false; }
+      if (rows.length) {
+        var ids = rows.map(function (r2) { return r2.org_id; });
+        var d = await client.from('org_data').select('key,value').in('org_id', ids);
+        if (!d.error) {
+          suppress = true;
+          try { (d.data || []).forEach(function (row) { if (row.value != null) rawSet(row.key, row.value); }); }
+          finally { suppress = false; }
+        }
+      }
+      return { ok: true, orgs: orgs.length };
     },
 
     // sube todo el localStorage actual a la nube (respaldo completo inicial)

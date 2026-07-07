@@ -40,8 +40,8 @@
     // ---- organizations registry (seed AGD with Vicente + Domi) ----
     var orgs = null;
     try { orgs = JSON.parse(rget('evm_orgs') || 'null'); } catch (e) {}
-    if (!orgs || !orgs.length) {
-      orgs = [{ id: 'agd', name: 'AGD', members: ['vicente', 'domi'] }];
+    if (!orgs) {
+      orgs = [];
       rset('evm_orgs', JSON.stringify(orgs));
     }
     function myOrgsOf(u) {
