@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<script src="supabase-sync.js"></script>
+<script src="evm-ns.js"></script>
+<script src="sfx.js"></script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; height: 100%; background: #160508; }
+  * { box-sizing: border-box; }
+  .rep-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+  .rep-scroll::-webkit-scrollbar-thumb { background: rgba(240,210,122,.3); border-radius: 6px; }
+</style>
+</helmet>
+<div style="position:fixed; inset:0; display:flex; flex-direction:column; background:radial-gradient(circle at 60% 20%, #45101a 0%, #2a0a10 55%, #160508 100%); color:#e8e8e8; font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;">
+
+  <div style="flex:none; height:54px; box-sizing:border-box; display:flex; align-items:center; gap:12px; padding:0 28px; border-bottom:2px solid #c9d0d8; background:linear-gradient(100deg, #1a0608 0%, #3a0c12 45%, #5e1018 75%, #7a141c 100%); white-space:nowrap;">
+    <button onClick="{{ toggleSound }}" ref="{{ soundBtnRef }}" title="Sonido" style="flex:none; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:none; background:transparent; color:#f0d27a; cursor:pointer; padding:0;" style-hover="color:#ffe49a;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7"></path><path d="M18.5 6a8 8 0 0 1 0 12"></path></svg></button>
+    <button onClick="{{ toggleFullscreen }}" title="Pantalla completa" style="flex:none; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:none; background:transparent; color:#f0d27a; cursor:pointer; padding:0;" style-hover="color:#ffe49a;"><svg width="20" height="20" viewBox="0 0 16 16" fill="none"><path d="M2 6V2.5h3.5M14 6V2.5h-3.5M2 10v3.5h3.5M14 10v3.5h-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button onClick="{{ goProjects }}" title="Projects" style="flex:none; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:none; background:transparent; color:#f0d27a; cursor:pointer; padding:0;" style-hover="color:#ffffff;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M3 11l9-7 9 7"></path><path d="M5 9.5V20h14V9.5"></path><path d="M10 20v-5h4v5"></path></svg></button>
+    <button onClick="{{ goPlan }}" title="Plano" style="flex:none; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:none; background:transparent; color:#f0d27a; cursor:pointer; padding:0;" style-hover="color:#ffffff;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M9 4L3 6.5v13.5l6-2.5 6 2.5 6-2.5V3l-6 2.5z"></path><path d="M9 4v13.5"></path><path d="M15 6.5V20"></path></svg></button>
+    <div style="flex:1;"></div>
+    <span ref="{{ projRightRef }}" style="flex:none; max-width:260px; font-family:Arial,sans-serif; font-weight:700; font-size:18px; color:#ffffff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+    <div style="width:1px; height:22px; background:rgba(240,210,122,.3); margin:0 2px;"></div>
+    <button onClick="{{ goBuild }}" title="Build" style="flex:none; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:none; background:transparent; color:#f0d27a; cursor:pointer; padding:0;" style-hover="color:#ffffff;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg></button>
+    <button onClick="{{ goPrecios }}" title="Precios" style="flex:none; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:none; background:transparent; color:#f0d27a; cursor:pointer; padding:0;" style-hover="color:#ffffff;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></button>
+    <button title="Reporte" style="flex:none; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:none; background:transparent; color:#ffffff; cursor:default; padding:0;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M9 2h6l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"></path><path d="M14 2v5h5"></path><path d="M8 13h8"></path><path d="M8 17h8"></path><path d="M8 9h3"></path></svg></button>
+  </div>
+
+  <div ref="{{ bodyRef }}" class="rep-scroll" style="flex:1; overflow:auto; padding:34px 44px 70px;"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  BKEY = 'agd_builds_v1';
+  bodyRef = React.createRef();
+  projRightRef = React.createRef();
+  soundBtnRef = React.createRef();
+
+  pid() {
+    const q = new URLSearchParams(location.search);
+    const p = q.get('project') || q.get('id');
+    if (p) { try { localStorage.setItem('agd_calc_project', p); } catch (e) {} return p; }
+    try { return localStorage.getItem('agd_calc_project'); } catch (e) { return null; }
+  }
+  navTo(file, params) {
+    const u = new URL(location.href);
+    u.pathname = u.pathname.replace(/[^/]+$/, file);
+    u.search = '';
+    if (params) Object.keys(params).forEach((k) => u.searchParams.set(k, params[k]));
+    location.href = u.toString();
+  }
+  fmtNum(n) { if (n == null || !isFinite(n)) return '—'; const r = Math.round(n * 100) / 100; return r.toLocaleString('es', { maximumFractionDigits: 2 }); }
+  fmtMoney(n) { if (n == null || !isFinite(n)) return '—'; return '$' + (Math.round(n * 100) / 100).toLocaleString('es', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  objKey(o) { return (o && o.num != null ? o.num + '·' : '') + ((o && o.name) || (typeof o === 'string' ? o : '')); }
+  readTakeoffs(pid) { try { const v = JSON.parse(localStorage.getItem('agd_takeoff_' + pid) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+  readMkt() { try { const v = JSON.parse(localStorage.getItem('agd_market_v1') || '{}'); return (v && typeof v === 'object') ? v : {}; } catch (e) { return {}; } }
+  readSubs() { try { const v = JSON.parse(localStorage.getItem('agd_subs_v1') || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+  readPick() { try { const v = JSON.parse(localStorage.getItem('agd_pricepick_v1') || '{}'); return (v && typeof v === 'object') ? v : {}; } catch (e) { return {}; } }
+  readProfit() { try { const v = localStorage.getItem('agd_profit_v1'); return v == null ? '' : v; } catch (e) { return ''; } }
+  subUnitPrice(subId, itemId) { const s = this.readSubs().find((x) => x.id === subId); if (!s || !s.prices) return null; let arr = s.prices[itemId]; if (arr == null) return null; if (!Array.isArray(arr)) return parseFloat(String(arr).replace(',', '.')); if (!arr.length) return null; const last = arr[arr.length - 1]; const v = parseFloat(String(last.v).replace(',', '.')); return isFinite(v) ? v : null; }
+  toContrib(to) {
+    if (to.type === 'sf') { let sf = 0; for (const p of (to.polys || [])) if (p.sf != null) sf += p.sf; return { lf: 0, sf: sf }; }
+    let ft = 0; for (const s of (to.segments || [])) if (s.ft != null) ft += s.ft;
+    if (to.type === 'sa') { const h = to.height || 0; return { lf: 0, sf: ft * h }; }
+    return { lf: ft, sf: 0 };
+  }
+  itemMeasureVals(it, pid) {
+    const tos = pid ? this.readTakeoffs(pid).filter((t) => t.item === it.id) : [];
+    let lf = 0, sf = 0, may = 0, men = 0;
+    const mays = [], mens = [], sfs = [];
+    tos.forEach((t) => {
+      const c = this.toContrib(t); lf += c.lf; sf += c.sf;
+      if (t.type === 'sf') (t.polys || []).forEach((p) => {
+        if (p.dmax != null) { may += p.dmax; mays.push(p.dmax); } else mays.push(null);
+        if (p.dmin != null) { men += p.dmin; mens.push(p.dmin); } else mens.push(null);
+        sfs.push(p.sf != null ? p.sf : null);
+      });
+    });
+    return { lf, sf, may, men, mays, mens, sfs };
+  }
+  evalExpr(expr, ctx) {
+    if (!expr || !String(expr).trim()) return null;
+    let e = String(expr).toLowerCase();
+    e = e.replace(/×/g, '*').replace(/÷/g, '/').replace(/(\d)\s*,\s*(\d)/g, '$1.$2');
+    e = e.replace(/mayor(\d+)/g, '(0)').replace(/menor(\d+)/g, '(0)');
+    e = e.replace(/mayor/g, '(' + (ctx.may || 0) + ')').replace(/menor/g, '(' + (ctx.men || 0) + ')')
+      .replace(/material/g, '(' + (ctx.mat || 0) + ')').replace(/sf/g, '(' + (ctx.sf || 0) + ')').replace(/lf/g, '(' + (ctx.lf || 0) + ')');
+    e = e.replace(/redondear\.mas/g, '_ceilm').replace(/subir/g, '_ceilm').replace(/techo/g, '_ceilm').replace(/redondear/g, '_r').replace(/bajar/g, '_floor').replace(/piso/g, '_floor');
+    e = e.replace(/;/g, ',').replace(/x/g, '*');
+    const test = e.replace(/_ceilm|_ceil|_floor|_r/g, '');
+    if (!/^[0-9+\-*/(). ,]*$/.test(test)) return null;
+    try {
+      const v = Function('_r', '_ceilm', '_ceil', '_floor', '"use strict"; return (' + e + ');')(
+        function (x, n) { n = n || 0; const f = Math.pow(10, n); return Math.round(x * f) / f; },
+        function (x, m) { m = (m == null || m === 0) ? 1 : Math.abs(m); return Math.ceil(x / m) * m; },
+        function (x) { return Math.ceil(x); },
+        function (x) { return Math.floor(x); }
+      );
+      return isFinite(v) ? v : null;
+    } catch (err) { return null; }
+  }
+  // suma cantidad y medida de un objeto sobre las áreas del item
+  objTotals(item, oo, pid) {
+    const vmeas = this.itemMeasureVals(item, pid);
+    const nA = Math.max((vmeas.mays || []).length, (vmeas.mens || []).length, (vmeas.sfs || []).length);
+    const exprC = (oo.calcExprMay && oo.calcExprMay.cant) ? oo.calcExprMay.cant : (typeof oo.calcExpr === 'string' ? oo.calcExpr : '');
+    const exprM = (oo.calcExprMay && oo.calcExprMay.med) ? oo.calcExprMay.med : '';
+    const matN = (parseFloat((String(oo.matSize || '').replace(',', '.').match(/-?\d+(\.\d+)?/) || [0])[0]) || 0);
+    let cant = 0, cany = false, med = 0, many = false, sf = 0;
+    for (let i = 0; i < nA; i++) {
+      const may = (vmeas.mays || [])[i] || 0, men = (vmeas.mens || [])[i] || 0, s = (vmeas.sfs || [])[i] || 0;
+      sf += s;
+      const ctx = { lf: 0, sf: s, may: may, men: men, mat: matN };
+      if (exprC) { const r = this.evalExpr(exprC, ctx); if (r != null) { cant += r; cany = true; } }
+      if (exprM) { const r2 = this.evalExpr(exprM, ctx); if (r2 != null) { med += r2; many = true; } }
+    }
+    return { cant: cany ? cant : null, med: many ? med : null, sf: sf, lf: vmeas.lf };
+  }
+  activeBuild() {
+    let builds = [];
+    try { builds = JSON.parse(localStorage.getItem(this.BKEY) || '[]'); } catch (e) { builds = []; }
+    if (!Array.isArray(builds) || !builds.length) return null;
+    return builds.find((b) => b.isDefault) || builds[0];
+  }
+  projectName(pid) {
+    try { const all = JSON.parse(localStorage.getItem('agd_projects_v1') || '[]'); const p = (all || []).find((x) => x.id === pid); return p ? p.name : ''; } catch (e) { return ''; }
+  }
+  componentDidMount() {
+    try { if (window.SFX && this.soundBtnRef.current) window.SFX.bindButton(this.soundBtnRef.current); } catch (e) {}
+    const pid = this.pid();
+    if (this.projRightRef.current) this.projRightRef.current.textContent = this.projectName(pid) || 'Proyecto';
+    this.render0(pid);
+  }
+  el(tag, css, txt) { const e = document.createElement(tag); if (css) e.style.cssText = css; if (txt != null) e.textContent = txt; return e; }
+  render0(pid) {
+    const root = this.bodyRef.current; if (!root) return;
+    root.innerHTML = '';
+    const wrap = this.el('div', 'max-width:1120px; margin:0 auto;');
+    root.appendChild(wrap);
+    const title = this.el('div', 'display:flex; align-items:baseline; gap:14px; margin-bottom:6px;');
+    title.appendChild(this.el('h1', "margin:0; font-family:'Oswald',sans-serif; font-size:30px; font-weight:600; letter-spacing:.04em; color:#fff; text-transform:uppercase;", 'Reporte'));
+    title.appendChild(this.el('span', 'font-family:"IBM Plex Sans",sans-serif; font-size:14px; color:rgba(255,255,255,.55);', this.projectName(pid) || ''));
+    wrap.appendChild(title);
+    wrap.appendChild(this.el('div', 'height:2px; background:linear-gradient(90deg,rgba(240,210,122,.5),transparent); margin:10px 0 24px;'));
+
+    const b = this.activeBuild();
+    const mkt = this.readMkt();
+    const pick = this.readPick();
+    if (!b || !Array.isArray(b.items) || !b.items.length) {
+      wrap.appendChild(this.el('div', 'color:rgba(255,255,255,.5); font-size:15px; padding:20px 0;', 'No hay items en la build. Créalos en BUILD.'));
+      return;
+    }
+    const sets = Array.isArray(b.sets) ? b.sets.slice() : [];
+    sets.sort((a, c) => (parseFloat(a.num) || 0) - (parseFloat(c.num) || 0));
+    const noSet = { id: '__none', num: '', name: 'Sin bloque' };
+    const groups = sets.concat([noSet]);
+
+    let grand = 0, anyRow = false;
+    const measuredIds = {};
+    this.readTakeoffs(pid).forEach((t) => { if (t.item) measuredIds[t.item] = true; });
+    groups.forEach((set) => {
+      const items = b.items.filter((it) => ((set.id === '__none') ? (!it.setId || !sets.some((s) => s.id === it.setId)) : (it.setId === set.id)) && measuredIds[it.id]);
+      if (!items.length) return;
+      // build rows first to know if the group has anything
+      const rows = [];
+      let setTotal = 0, setHasTotal = false;
+      items.forEach((it) => {
+        const objs = (it.objects || []);
+        const objRows = [];
+        const mrec = mkt[it.id] || {};
+        const unit = mrec.unit || 'pieza';
+        const src = (pick[it.id] || 'market');
+        const itemPf = parseFloat(String(mrec.profit == null ? '' : mrec.profit).replace(',', '.'));
+        const pfMult = 1 + (isFinite(itemPf) ? itemPf : 0) / 100;
+        const base = parseFloat((String(mrec.base || '').replace(',', '.').match(/-?\d+(\.\d+)?/) || [''])[0]);
+        const subP = (src !== 'market') ? this.subUnitPrice(src, it.id) : null;
+        objs.forEach((o) => {
+          const oo = (typeof o === 'string') ? { name: o } : o;
+          const t = this.objTotals(it, oo, pid);
+          const adj = parseFloat((String(oo.price || '').replace(',', '.').match(/-?\d+(\.\d+)?/) || [''])[0]);
+          let unitPrice, hasPrice;
+          if (src !== 'market') { unitPrice = (subP != null ? subP : 0) + (isFinite(adj) ? adj : 0); hasPrice = (subP != null) || isFinite(adj); }
+          else { unitPrice = (isFinite(base) ? base : 0) + (isFinite(adj) ? adj : 0); hasPrice = isFinite(base) || isFinite(adj); }
+          const mult = (unit === 'pieza') ? t.cant : (unit === 'sf') ? t.sf : (t.med != null ? t.med : t.lf);
+          const lineTotal = (hasPrice && mult != null && isFinite(mult)) ? unitPrice * mult * pfMult : null;
+          if (lineTotal != null) { setTotal += lineTotal; setHasTotal = true; }
+          objRows.push({ name: oo.name || 'Objeto', cant: t.cant, med: t.med, sf: t.sf, lf: t.lf, price: hasPrice ? unitPrice : null, unit: unit, total: lineTotal });
+        });
+        if (objRows.length) rows.push({ item: it, objRows: objRows });
+      });
+      if (!rows.length) return;
+      anyRow = true;
+      grand += setTotal;
+
+      const card = this.el('div', 'margin-bottom:26px; border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,.14); background:rgba(20,10,14,.5);');
+      const sh = this.el('div', 'display:flex; align-items:center; gap:12px; padding:12px 18px; background:linear-gradient(100deg,#3a0c12,#5e1018); border-bottom:1px solid rgba(240,210,122,.25);');
+      if (set.num !== '' && set.num != null) sh.appendChild(this.el('span', "flex:none; font-family:'Oswald',sans-serif; font-size:16px; font-weight:700; color:#f0d27a; min-width:34px;", String(set.num).padStart(2, '0')));
+      sh.appendChild(this.el('span', "flex:1; font-family:'Oswald',sans-serif; font-size:17px; font-weight:600; letter-spacing:.03em; color:#fff; text-transform:uppercase;", set.name || 'Bloque'));
+      if (setHasTotal) sh.appendChild(this.el('span', 'flex:none; font-family:ui-monospace,monospace; font-size:15px; font-weight:800; color:#8ff0a0;', this.fmtMoney(setTotal)));
+      card.appendChild(sh);
+
+      // column header
+      const chd = this.el('div', 'display:flex; gap:12px; padding:7px 18px; border-bottom:1px solid rgba(255,255,255,.1);');
+      const mk = (t, w, col, right) => this.el('span', (w ? ('flex:none; width:' + w + 'px;') : 'flex:1; min-width:0;') + ' ' + (right ? 'text-align:right;' : '') + ' font-family:"IBM Plex Sans",sans-serif; font-size:9.5px; letter-spacing:.1em; font-weight:800; color:' + col + ';', t);
+      chd.appendChild(mk('Item / Objeto', 0, 'rgba(255,255,255,.4)'));
+      chd.appendChild(mk('Cantidad', 110, 'rgba(231,198,107,.7)', true));
+      chd.appendChild(mk('Medida', 110, 'rgba(159,216,176,.75)', true));
+      chd.appendChild(mk('Precio unidad', 120, 'rgba(255,255,255,.4)', true));
+      chd.appendChild(mk('Total', 120, 'rgba(143,240,160,.8)', true));
+      card.appendChild(chd);
+
+      rows.forEach((r) => {
+        const ih = this.el('div', 'padding:9px 18px 3px; font-family:"IBM Plex Sans",sans-serif; font-size:13.5px; font-weight:800; color:#e6eaee;', (r.item.num != null && r.item.num !== '' ? r.item.num + ' · ' : '') + (r.item.name || 'Item'));
+        card.appendChild(ih);
+        r.objRows.forEach((o) => {
+          const row = this.el('div', 'display:flex; align-items:center; gap:12px; padding:6px 18px 6px 32px; border-bottom:1px solid rgba(255,255,255,.05);');
+          row.appendChild(this.el('span', 'flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:"IBM Plex Sans",sans-serif; font-size:13px; font-weight:600; color:#c7ced5;', o.name));
+          row.appendChild(this.el('span', 'flex:none; width:110px; text-align:right; font-family:ui-monospace,monospace; font-size:13px; font-weight:700; color:#e7c66b;', o.cant != null ? this.fmtNum(o.cant) : '—'));
+          row.appendChild(this.el('span', 'flex:none; width:110px; text-align:right; font-family:ui-monospace,monospace; font-size:13px; font-weight:700; color:#9fd8b0;', o.med != null ? this.fmtNum(o.med) : '—'));
+          row.appendChild(this.el('span', 'flex:none; width:120px; text-align:right; font-family:ui-monospace,monospace; font-size:13px; font-weight:600; color:rgba(255,255,255,.65);', o.price != null ? this.fmtMoney(o.price) : '—'));
+          row.appendChild(this.el('span', 'flex:none; width:120px; text-align:right; font-family:ui-monospace,monospace; font-size:13.5px; font-weight:800; color:#8ff0a0;', o.total != null ? this.fmtMoney(o.total) : '—'));
+          card.appendChild(row);
+        });
+      });
+      wrap.appendChild(card);
+    });
+
+    if (!anyRow) {
+      wrap.appendChild(this.el('div', 'color:rgba(255,255,255,.5); font-size:15px; padding:20px 0;', 'Este proyecto no tiene mediciones en el plano todavía. Mide en el visor de plano para ver el reporte.'));
+      return;
+    }
+    const gt = this.el('div', 'display:flex; align-items:center; gap:14px; margin-top:8px; padding:16px 22px; border-radius:14px; background:linear-gradient(100deg,#1a0608,#3a0c12); border:1.5px solid rgba(240,210,122,.4);');
+    gt.appendChild(this.el('span', "flex:1; font-family:'Oswald',sans-serif; font-size:18px; font-weight:600; letter-spacing:.06em; color:#fff; text-transform:uppercase;", 'Total del proyecto'));
+    gt.appendChild(this.el('span', 'flex:none; font-family:ui-monospace,monospace; font-size:22px; font-weight:800; color:#8ff0a0;', this.fmtMoney(grand)));
+    wrap.appendChild(gt);
+  }
+  renderVals() {
+    return {
+      bodyRef: this.bodyRef, projRightRef: this.projRightRef, soundBtnRef: this.soundBtnRef,
+      toggleSound: () => { try { if (window.SFX) window.SFX.toggle(); } catch (e) {} },
+      toggleFullscreen: () => { try { const d = document, el = d.documentElement; const fsEl = d.fullscreenElement || d.webkitFullscreenElement; if (fsEl) { (d.exitFullscreen || d.webkitExitFullscreen).call(d); } else { (el.requestFullscreen || el.webkitRequestFullscreen).call(el); } } catch (e) {} },
+      goProjects: () => this.navTo('HOME.dc.html'),
+      goBuild: () => this.navTo('HOME.dc.html', { builds: '1' }),
+      goPrecios: () => { const pid = this.pid(); this.navTo('Precios.dc.html', pid ? { id: pid } : null); },
+      goPlan: () => { const pid = this.pid(); this.navTo('Visor proyecto (No tocar).dc.html', pid ? { id: pid } : null); },
+    };
+  }
+}
+</script>
+</body>
+</html>
