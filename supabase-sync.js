@@ -242,6 +242,24 @@
     },
 
     pushNow: async function () { await flush(); },
+
+    // --- Storage de planos (PDF) en la nube ---
+    uploadPlan: async function (key, blob) {
+      try { await ready; } catch (e) { return false; }
+      try {
+        var r = await client.storage.from('planos').upload(key, blob, { upsert: true, contentType: 'application/pdf' });
+        return !r.error;
+      } catch (e) { return false; }
+    },
+    downloadPlan: async function (key) {
+      try { await ready; } catch (e) { return null; }
+      try {
+        var r = await client.storage.from('planos').download(key);
+        if (r.error) return null;
+        return r.data;   // Blob
+      } catch (e) { return null; }
+    },
+
     signOut: async function () { try { await ready; await client.auth.signOut(); } catch (e) {} },
     currentUser: async function () { try { await ready; return (await client.auth.getUser()).data.user; } catch (e) { return null; } },
   };

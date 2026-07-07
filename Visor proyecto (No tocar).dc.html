@@ -256,7 +256,15 @@ class Component extends DCLogic {
     if (this.docCache[key]) return this.docCache[key];
     let data;
     if (pl.src) data = await (await fetch(encodeURI(pl.src))).arrayBuffer();
-    else { const blob = await this.getBlob(pl.blobKey || pl.id); if (!blob) return null; data = await blob.arrayBuffer(); }
+    else {
+      let blob = await this.getBlob(pl.blobKey || pl.id);
+      if (!blob && window.EVMCloud && window.EVMCloud.downloadPlan) {
+        try { blob = await window.EVMCloud.downloadPlan(pl.blobKey || pl.id); } catch (e) {}
+        if (blob) { try { await this.putBlob(pl.blobKey || pl.id, blob); } catch (e) {} }
+      }
+      if (!blob) return null;
+      data = await blob.arrayBuffer();
+    }
     const lib = await this.lib();
     const doc = await lib.getDocument({ data: new Uint8Array(data) }).promise;
     this.docCache[key] = doc;
@@ -428,6 +436,7 @@ class Component extends DCLogic {
       const base = f.name.replace(/\.pdf$/i, '');
       const blobKey = 'blob' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       await this.putBlob(blobKey, f);
+      if (window.EVMCloud && window.EVMCloud.uploadPlan) { try { await window.EVMCloud.uploadPlan(blobKey, f); } catch (e) {} }
       let numPages = 1;
       try {
         const lib = await this.lib();
