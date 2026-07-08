@@ -62,6 +62,18 @@
     if (window.__evmNSInstalled) return;
     window.__evmNSInstalled = true;
 
+    // ---- limpiar copias vencidas de la sesión que quedaron con prefijo ----
+    // (antes se namespaceaba la clave sb-...; ahora es global. Borramos las viejas
+    //  con prefijo para que el cliente lea siempre la copia buena sin prefijo.)
+    try {
+      var stale = [];
+      for (var si = 0; si < real.length; si++) {
+        var sk = _key.call(real, si);
+        if (sk && sk.indexOf('sb-') > 0 && /::sb-/.test(sk)) stale.push(sk);
+      }
+      for (var sd = 0; sd < stale.length; sd++) _rem.call(real, stale[sd]);
+    } catch (e) {}
+
     var PFX = (ws.indexOf('org::') === 0) ? ('org::' + ws.slice(5) + '::') : ('u::' + user + '::');
     var UPFX = 'u::' + user + '::';   // per-user prefix, independent of active workspace
 
@@ -72,7 +84,7 @@
     window.__evmWs = ws;
     window.__evmPfx = PFX;
 
-    function isGlobal(k) { return k.indexOf('evm_') === 0; }
+    function isGlobal(k) { return k.indexOf('evm_') === 0 || k.indexOf('sb-') === 0 || k.indexOf('sb_') === 0; }
     // The Builds library is tied to the signed-in USER for the whole session —
     // the same Builds show in Personal and in any Organization space.
     function isUserScoped(k) { return k.indexOf('agd_builds') === 0; }
