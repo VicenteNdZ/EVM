@@ -37,26 +37,35 @@
     </div>
 
     <div style="text-align:center; margin:20px 0 4px; font-size:34px; font-weight:600; letter-spacing:.05em; color:#ffffff;">Bienvenido</div>
-    <div style="text-align:center; margin-bottom:26px; font-size:13.5px; color:rgba(255,255,255,.5); font-weight:300;">Ingresa tus credenciales para continuar</div>
+    <div style="text-align:center; margin-bottom:26px; font-size:13.5px; color:rgba(255,255,255,.5); font-weight:300;">{{ subtitle }}</div>
 
     <div style="display:flex; flex-direction:column; gap:14px;">
+      <sc-if value="{{ showUser }}" hint-placeholder-val="{{ true }}">
       <label style="display:flex; flex-direction:column; gap:7px;">
         <span style="font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:#16c8d0; font-weight:500;">Usuario</span>
         <input ref="{{ userRef }}" onKeyDown="{{ onKey }}" type="text" autocomplete="username" placeholder="Tu usuario" style="height:46px; padding:0 15px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.05); color:#fff; font-size:16px; font-family:inherit; letter-spacing:.02em;" style-focus="border-color:#16c8d0; background:rgba(22,200,208,.08);" />
       </label>
+      </sc-if>
 
+      <sc-if value="{{ showPass }}" hint-placeholder-val="{{ true }}">
       <label style="display:flex; flex-direction:column; gap:7px;">
-        <span style="font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:#16c8d0; font-weight:500;">Contraseña</span>
+        <span style="font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:#16c8d0; font-weight:500;">{{ passLabel }}</span>
         <div style="position:relative; display:flex; align-items:center;">
           <input ref="{{ passRef }}" onKeyDown="{{ onKey }}" type="password" autocomplete="current-password" placeholder="••••••••" style="flex:1; height:46px; padding:0 44px 0 15px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.05); color:#fff; font-size:16px; font-family:inherit; letter-spacing:.02em;" style-focus="border-color:#16c8d0; background:rgba(22,200,208,.08);" />
           <button onClick="{{ togglePass }}" type="button" title="Mostrar/ocultar" style="position:absolute; right:8px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border:none; background:transparent; color:rgba(255,255,255,.45); cursor:pointer;" style-hover="color:#16c8d0;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
         </div>
       </label>
+      </sc-if>
     </div>
 
     <div ref="{{ errRef }}" style="display:none; margin-top:14px; padding:10px 13px; border-radius:9px; background:rgba(200,40,52,.14); border:1px solid rgba(200,40,52,.4); color:#ff9aa2; font-size:13px; text-align:center; letter-spacing:.02em;"></div>
 
-    <button onClick="{{ submit }}" style="width:100%; height:50px; margin-top:22px; border-radius:11px; border:none; cursor:pointer; font-family:inherit; font-size:18px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:#0b1418; background:linear-gradient(180deg, #ffffff 0%, #dfe7e8 100%); box-shadow:0 6px 20px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.9);" style-hover="background:linear-gradient(180deg,#ffffff 0%,#c9eef0 100%); box-shadow:0 8px 26px rgba(22,200,208,.45), inset 0 1px 0 rgba(255,255,255,1);">Ingresar</button>
+    <button onClick="{{ submit }}" style="width:100%; height:50px; margin-top:22px; border-radius:11px; border:none; cursor:pointer; font-family:inherit; font-size:18px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:#0b1418; background:linear-gradient(180deg, #ffffff 0%, #dfe7e8 100%); box-shadow:0 6px 20px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.9);" style-hover="background:linear-gradient(180deg,#ffffff 0%,#c9eef0 100%); box-shadow:0 8px 26px rgba(22,200,208,.45), inset 0 1px 0 rgba(255,255,255,1);">{{ btnLabel }}</button>
+
+    <div style="margin-top:16px; display:flex; align-items:center; justify-content:space-between; font-size:13px; letter-spacing:.04em;">
+      <a onClick="{{ linkLeft }}" style="color:#16c8d0; cursor:pointer; text-decoration:none; font-weight:500;" style-hover="color:#7de5ea; text-decoration:underline;">{{ linkLeftLabel }}</a>
+      <a onClick="{{ linkRight }}" style="color:rgba(255,255,255,.55); cursor:pointer; text-decoration:none;" style-hover="color:#fff; text-decoration:underline;">{{ linkRightLabel }}</a>
+    </div>
 
     <div style="margin-top:22px; padding-top:16px; border-top:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:space-between; font-size:11px; color:rgba(255,255,255,.32); letter-spacing:.06em;">
       <span>AGD · Estimating</span>
@@ -77,8 +86,14 @@ class Component extends DCLogic {
   errRef = React.createRef();
   verRef = React.createRef();
 
+  state = { mode: 'login' };   // login | signup | reset | newpass
+
   componentDidMount() {
     if (this.verRef.current) this.verRef.current.textContent = this.APP_VERSION;
+    // ¿Llegó desde el enlace del correo de “olvidé mi contraseña”?
+    const h = (location.hash || '') + (location.search || '');
+    if (h.indexOf('type=recovery') >= 0) { this.setState({ mode: 'newpass' }); return; }
+    if (h.indexOf('error_code') >= 0 || h.indexOf('error=') >= 0) { this.showErr('El enlace del correo expiró o ya fue usado. Pide uno nuevo con “¿Olvidaste tu contraseña?”.'); return; }
     // Already signed in on this device? go straight to the app.
     let s = null;
     try { s = JSON.parse(localStorage.getItem('evm_auth') || 'null'); } catch (e) {}
@@ -102,25 +117,80 @@ class Component extends DCLogic {
   async doSubmit() {
     if (this._busy) return;
     this.clearErr();
+    const mode = this.state.mode;
     const raw = (this.userRef.current?.value || '').trim().toLowerCase();
     const pass = (this.passRef.current?.value || '');
-    if (!raw || !pass) { this.showErr('Ingresa usuario y contraseña.'); return; }
-    const user = raw.indexOf('@') >= 0 ? raw.split('@')[0] : raw;
-    this._busy = true; this.showErr('Conectando a Supabase…');
     try {
-      const res = await window.EVMCloud.signInOrUp(raw, pass);
-      if (!res.ok) { this._busy = false; this.showErr('❌ ' + (res.error || 'Usuario o contraseña incorrectos.')); return; }
+      if (mode === 'reset') {
+        if (!raw) { this.showErr('Escribe tu correo.'); return; }
+        this._busy = true; this.showErr('Enviando correo…');
+        const r = await window.EVMCloud.resetPassword(raw);
+        this._busy = false;
+        this.showErr(r.ok ? '📬 Listo. Revisa tu correo (y spam) y aprieta el enlace para crear una nueva contraseña.' : '❌ ' + (r.error || 'No se pudo enviar.'));
+        return;
+      }
+      if (mode === 'newpass') {
+        if (!pass || pass.length < 6) { this.showErr('La nueva contraseña debe tener al menos 6 caracteres.'); return; }
+        this._busy = true; this.showErr('Guardando…');
+        const r = await window.EVMCloud.updatePassword(pass);
+        this._busy = false;
+        if (!r.ok) { this.showErr('❌ ' + (r.error || 'No se pudo guardar. Pedí un enlace nuevo.')); return; }
+        this.showErr('✅ Contraseña actualizada. Entrando…');
+        try {
+          const u2 = await window.EVMCloud.currentUser();
+          const user2 = ((u2 && u2.email) || '').split('@')[0];
+          localStorage.setItem('evm_auth', JSON.stringify({ user: user2, ts: Date.now() }));
+        } catch (e) {}
+        try { await window.EVMCloud.pullAll(); } catch (e) {}
+        this.goApp();
+        return;
+      }
+      if (!raw || !pass) { this.showErr('Ingresa usuario y contraseña.'); return; }
+      const user = raw.indexOf('@') >= 0 ? raw.split('@')[0] : raw;
+      if (mode === 'signup') {
+        this._busy = true; this.showErr('Creando cuenta…');
+        const r = await window.EVMCloud.signUp(raw, pass);
+        this._busy = false;
+        if (!r.ok) { this.showErr('❌ ' + (r.error || 'No se pudo crear la cuenta.')); return; }
+        if (r.needsConfirm) { this.showErr('📬 Cuenta creada. Revisa tu correo y aprieta el enlace para confirmarla; después vuelve aquí e ingresa.'); return; }
+        try { localStorage.setItem('evm_auth', JSON.stringify({ user, ts: Date.now() })); } catch (e) {}
+        try { await window.EVMCloud.pullAll(); } catch (e) {}
+        this.goApp();
+        return;
+      }
+      // login normal (NO crea cuentas)
+      this._busy = true; this.showErr('Conectando…');
+      const res = await window.EVMCloud.signIn(raw, pass);
+      this._busy = false;
+      if (!res.ok) { this.showErr('❌ ' + (res.error || 'Usuario o contraseña incorrectos.')); return; }
       try { await window.EVMCloud.pullAll(); } catch (e) {}
       try { localStorage.setItem('evm_auth', JSON.stringify({ user, ts: Date.now() })); } catch (e) {}
       this.goApp();
     } catch (e) {
       this._busy = false;
-      this.showErr('❌ Error de conexión con Supabase. Verifica tu internet.');
+      this.showErr('❌ Error de conexión. Verifica tu internet.');
     }
   }
 
   renderVals() {
+    const mode = this.state.mode;
+    const T = {
+      login:   { sub: 'Ingresa tus credenciales para continuar', btn: 'Ingresar', left: 'Crear cuenta', right: '¿Olvidaste tu contraseña?' },
+      signup:  { sub: 'Crea tu cuenta con tu correo real', btn: 'Crear cuenta', left: '← Ya tengo cuenta', right: '' },
+      reset:   { sub: 'Escribe tu correo y te enviamos un enlace', btn: 'Enviar enlace', left: '← Volver a ingresar', right: '' },
+      newpass: { sub: 'Escribe tu nueva contraseña', btn: 'Guardar contraseña', left: '← Volver a ingresar', right: '' },
+    };
+    const t = T[mode] || T.login;
     return {
+      subtitle: t.sub,
+      btnLabel: t.btn,
+      showUser: mode !== 'newpass',
+      showPass: mode !== 'reset',
+      passLabel: mode === 'newpass' ? 'Nueva contraseña' : 'Contraseña',
+      linkLeftLabel: t.left,
+      linkRightLabel: t.right,
+      linkLeft: () => { this.clearErr(); this.setState({ mode: mode === 'login' ? 'signup' : 'login' }); },
+      linkRight: () => { if (mode === 'login') { this.clearErr(); this.setState({ mode: 'reset' }); } },
       userRef: this.userRef,
       passRef: this.passRef,
       errRef: this.errRef,

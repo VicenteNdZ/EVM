@@ -163,6 +163,62 @@
   window.EVMCloud = {
     ready: ready,
 
+    // traduce errores comunes de Supabase al español
+    _esErr: function (msg) {
+      if (!msg) return msg;
+      if (/invalid login credentials/i.test(msg)) return 'Usuario o contraseña incorrectos.';
+      if (/email not confirmed/i.test(msg)) return 'Falta confirmar el correo. Revisa tu bandeja y aprieta el enlace.';
+      if (/already registered|already been registered/i.test(msg)) return 'Ese correo ya tiene cuenta. Si no recuerdas la clave usa “¿Olvidaste tu contraseña?”.';
+      if (/password should be|at least 6/i.test(msg)) return 'La contraseña debe tener al menos 6 caracteres.';
+      if (/rate limit|too many|security purposes/i.test(msg)) return 'Demasiados intentos. Espera unos minutos y vuelve a probar.';
+      if (/invalid email|unable to validate email/i.test(msg)) return 'Ese correo no es válido.';
+      return msg;
+    },
+    _loginUrl: function () {
+      try { var u = new URL(location.href); u.search = ''; u.hash = ''; return u.toString(); } catch (e) { return location.href; }
+    },
+
+    // SOLO iniciar sesión (no crea cuentas)
+    signIn: async function (user, pass) {
+      try { await ready; } catch (e) { return { ok: false, error: 'No se pudo cargar la conexión.' }; }
+      var email = emailOf(user);
+      if (!email || !pass) return { ok: false, error: 'Faltan datos.' };
+      var r = await client.auth.signInWithPassword({ email: email, password: pass });
+      if (r.error) return { ok: false, error: window.EVMCloud._esErr(r.error.message) };
+      sessionUser = r.data.user;
+      return { ok: true, user: r.data.user };
+    },
+
+    // crear cuenta explícitamente
+    signUp: async function (user, pass) {
+      try { await ready; } catch (e) { return { ok: false, error: 'No se pudo cargar la conexión.' }; }
+      var email = emailOf(user);
+      if (!email || !pass) return { ok: false, error: 'Faltan datos.' };
+      var su = await client.auth.signUp({ email: email, password: pass, options: { emailRedirectTo: window.EVMCloud._loginUrl() } });
+      if (su.error) return { ok: false, error: window.EVMCloud._esErr(su.error.message) };
+      if (su.data && su.data.user && !su.data.session) return { ok: true, needsConfirm: true };
+      sessionUser = su.data.user;
+      return { ok: true, user: su.data.user };
+    },
+
+    // enviar correo de recuperación de contraseña
+    resetPassword: async function (user) {
+      try { await ready; } catch (e) { return { ok: false, error: 'No se pudo cargar la conexión.' }; }
+      var email = emailOf(user);
+      if (!email) return { ok: false, error: 'Escribe tu correo.' };
+      var r = await client.auth.resetPasswordForEmail(email, { redirectTo: window.EVMCloud._loginUrl() });
+      if (r.error) return { ok: false, error: window.EVMCloud._esErr(r.error.message) };
+      return { ok: true };
+    },
+
+    // guardar nueva contraseña (tras llegar por el enlace de recuperación)
+    updatePassword: async function (pass) {
+      try { await ready; } catch (e) { return { ok: false, error: 'No se pudo cargar la conexión.' }; }
+      var r = await client.auth.updateUser({ password: pass });
+      if (r.error) return { ok: false, error: window.EVMCloud._esErr(r.error.message) };
+      return { ok: true };
+    },
+
     // inicia sesión; si la cuenta no existe, la crea (una sola vez) y entra
     signInOrUp: async function (user, pass) {
       try { await ready; } catch (e) { return { ok: false, error: 'No se pudo cargar la conexión.' }; }
