@@ -287,10 +287,11 @@
     if (!rawGet('evm_auth')) return;                // no cree estar logueado: no molestar
     (async function () {
       try { await ready; } catch (e) { return; }
-      var s = null;
-      try { s = (await client.auth.getSession()).data.session; } catch (e) {}
-      if (!s) { try { s = (await client.auth.refreshSession()).data.session; } catch (e) {} }
-      if (s) return;                                 // sesión viva: todo bien
+      var u = null;
+      // valida contra el servidor (no solo la sesión guardada, que puede estar vencida)
+      try { u = (await client.auth.getUser()).data.user; } catch (e) {}
+      if (!u) { try { u = (await client.auth.refreshSession()).data.user; } catch (e) {} }
+      if (u) return;                                 // sesión viva y válida: todo bien
       // no hay sesión válida -> reconectar
       try { rawRem('evm_auth'); } catch (e) {}
       try {
