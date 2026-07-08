@@ -97,7 +97,7 @@
   loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js')
     .then(function () {
       client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-        auth: { storage: authStorage, persistSession: true, autoRefreshToken: true }
+        auth: { persistSession: true, autoRefreshToken: true }
       });
       client.auth.getSession().then(function (r) {
         sessionUser = (r && r.data && r.data.session) ? r.data.session.user : null;
