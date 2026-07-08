@@ -272,6 +272,23 @@
         return !r.error;
       } catch (e) { return false; }
     },
+    // diagnóstico: qué ve el cliente de la sesión
+    debugSession: async function () {
+      var out = {};
+      try { await ready; out.ready = true; } catch (e) { out.ready = false; return out; }
+      try {
+        var s = await client.auth.getSession();
+        out.hasSession = !!(s.data && s.data.session);
+        if (s.error) out.sessErr = s.error.message;
+        if (s.data && s.data.session) { out.expiresAt = s.data.session.expires_at; out.tokenLen = (s.data.session.access_token || '').length; }
+      } catch (e) { out.sessThrow = String(e); }
+      try {
+        var u = await client.auth.getUser();
+        out.user = (u.data && u.data.user) ? u.data.user.email : null;
+        if (u.error) out.userErr = u.error.message;
+      } catch (e) { out.userThrow = String(e); }
+      return out;
+    },
   };
 
   // intento de vaciar la cola al salir de la página
