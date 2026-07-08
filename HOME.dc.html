@@ -647,9 +647,14 @@ class Component extends DCLogic {
     const ok = document.createElement('button'); ok.textContent = okLabel || 'Eliminar'; ok.style.cssText = 'height:38px; padding:0 18px; border:none; background:' + (okLabel ? 'linear-gradient(180deg,#c9d0d8,#0f9aa0)' : 'linear-gradient(180deg,#ef5d5d,#d63a3a)') + '; color:#fff; border-radius:9px; cursor:pointer; font-family:inherit; font-size:13px; font-weight:700;';
     const close = () => { ov.remove(); };
     const submit = () => {
-      if (expected == null) { err.textContent = 'No hay sesión activa.'; return; }
-      if ((inp.value || '') !== expected) { err.textContent = 'Contraseña incorrecta.'; inp.value = ''; inp.focus(); return; }
-      close(); onOk();
+      const val = inp.value || '';
+      if (!val) { err.textContent = 'Ingresa tu contraseña.'; return; }
+      err.textContent = 'Verificando…';
+      Promise.resolve(window.EVMCloud && window.EVMCloud.verifyPassword ? window.EVMCloud.verifyPassword(val) : false)
+        .then((okPass) => {
+          if (!okPass) { err.textContent = 'Contraseña incorrecta.'; inp.value = ''; inp.focus(); return; }
+          close(); onOk();
+        });
     };
     cancel.onclick = close;
     ok.onclick = submit;

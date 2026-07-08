@@ -262,8 +262,43 @@
 
     signOut: async function () { try { await ready; await client.auth.signOut(); } catch (e) {} },
     currentUser: async function () { try { await ready; return (await client.auth.getUser()).data.user; } catch (e) { return null; } },
+    // verifica la contraseña del usuario actual contra Supabase (para confirmar acciones)
+    verifyPassword: async function (pass) {
+      try { await ready; } catch (e) { return false; }
+      try {
+        var u = (await client.auth.getUser()).data.user;
+        if (!u || !u.email || !pass) return false;
+        var r = await client.auth.signInWithPassword({ email: u.email, password: pass });
+        return !r.error;
+      } catch (e) { return false; }
+    },
   };
 
   // intento de vaciar la cola al salir de la página
   window.addEventListener('beforeunload', function () { try { if (Object.keys(dirty).length) flush(); } catch (e) {} });
+
+  // --- asegurar sesión viva en las páginas de la app ---
+  // Si la app entró por la marca local (evm_auth) pero NO hay sesión real de
+  // Supabase (vencida/ausente), intentamos renovarla; si no se puede, mandamos
+  // al login para reconectar de verdad (así todo se sincroniza).
+  (function enforceSession() {
+    var path = (location.pathname || '');
+    if (/EVM\.dc\.html$/i.test(path)) return;      // página de login: no forzar
+    if (!rawGet('evm_auth')) return;                // no cree estar logueado: no molestar
+    (async function () {
+      try { await ready; } catch (e) { return; }
+      var s = null;
+      try { s = (await client.auth.getSession()).data.session; } catch (e) {}
+      if (!s) { try { s = (await client.auth.refreshSession()).data.session; } catch (e) {} }
+      if (s) return;                                 // sesión viva: todo bien
+      // no hay sesión válida -> reconectar
+      try { rawRem('evm_auth'); } catch (e) {}
+      try {
+        var url = new URL(location.href);
+        url.pathname = url.pathname.replace(/[^/]+$/, 'EVM.dc.html');
+        url.search = '';
+        location.href = url.toString();
+      } catch (e) {}
+    })();
+  })();
 })();
